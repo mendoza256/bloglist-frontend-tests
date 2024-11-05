@@ -1,4 +1,4 @@
-import { loginWith, createBlog } from "./helper";
+import { loginWith, createBlog, getIntitialLikes } from "./helper";
 import { test, expect, describe, beforeEach } from "@playwright/test";
 
 describe("Blog app", () => {
@@ -54,6 +54,30 @@ describe("Blog app", () => {
 
       const blogsContainer = page.getByTestId("blogs");
       await expect(blogsContainer).toContainText(randomTitle);
+    });
+
+    test("a blog can be liked", async ({ page }) => {
+      await createBlog(page, {
+        title: "test blog 2",
+        author: "test author 2",
+        url: "test url 2",
+      });
+
+      await page
+        .getByTestId("blogs")
+        .locator(".blog:nth-child(1) > button")
+        .click();
+
+      const initialLikes = await getIntitialLikes(page);
+
+      await page
+        .getByTestId("blogs")
+        .locator(".blog:nth-child(1) button.like")
+        .click();
+
+      await expect(
+        page.getByTestId("blogs").locator(".blog:nth-child(1) span.likes")
+      ).toContainText(`likes: ${initialLikes + 1}`);
     });
   });
 });

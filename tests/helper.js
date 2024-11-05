@@ -13,4 +13,13 @@ const createBlog = async (page, content) => {
   await page.getByRole("button", { name: "save" }).click();
 };
 
-export { loginWith, createBlog };
+const getIntitialLikes = async (page) => {
+  const intitialLikesText = await page
+    .getByTestId("blogs")
+    .locator(".blog:nth-child(1) span.likes")
+    .textContent();
+
+  return parseInt(intitialLikesText.replace("likes: ", ""));
+};
+
+export { loginWith, createBlog, getIntitialLikes };
