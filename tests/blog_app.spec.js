@@ -80,4 +80,24 @@ describe("Blog app", () => {
       ).toContainText(`likes: ${initialLikes + 1}`);
     });
   });
+
+  test.only("a blog can be deleted", async ({ page }) => {
+    // TODO make this test work
+    const randomTitle = Math.random().toString(36).substring(2, 7);
+    await createBlog(page, {
+      title: randomTitle,
+      author: "test author 3",
+      url: "test url 3",
+    });
+
+    const blogsContainer = page.getByTestId("blogs");
+    await expect(blogsContainer).toContainText(randomTitle);
+
+    await page
+      .getByTestId("blogs")
+      .locator(".blog:nth-child(1) button.remove")
+      .click();
+
+    await expect(blogsContainer).not.toContainText("test blog 3");
+  });
 });
