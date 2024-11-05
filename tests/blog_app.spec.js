@@ -21,22 +21,24 @@ describe("Blog app", () => {
     await expect(page.getByRole("button", { name: "log in" })).toBeVisible();
   });
 
-  test("login form can be opened", async ({ page }) => {
-    await loginWith(page, "root", "password");
+  describe("Login", () => {
+    test("succeeds with correct credentials", async ({ page }) => {
+      await loginWith(page, "root", "password");
 
-    await expect(page.getByTestId("user-logged-in")).toContainText(
-      "root logged in"
-    );
+      await expect(page.getByTestId("user-logged-in")).toContainText(
+        "root logged in"
+      );
+    });
+
+    test("fails with wrong credentials", async ({ page }) => {
+      await loginWith(page, "root", "wrong password");
+
+      const errorDiv = await page.locator(".error");
+      await expect(errorDiv).toContainText("Wrong credentials");
+    });
   });
 
-  test("login fails with wrong password", async ({ page }) => {
-    await loginWith(page, "root", "wrong password");
-
-    const errorDiv = await page.locator(".error");
-    await expect(errorDiv).toContainText("Wrong credentials");
-  });
-
-  describe("when logged in", () => {
+  describe("When logged in", () => {
     beforeEach(async ({ page }) => {
       await loginWith(page, "root", "password");
     });
