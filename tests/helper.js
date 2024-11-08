@@ -13,6 +13,13 @@ const createBlog = async (page, content) => {
   await page.getByRole("button", { name: "save" }).click();
 };
 
+const createBlogs = async (page, blogs) => {
+  for (const blog of blogs) {
+    await createBlog(page, blog);
+    await page.waitForTimeout(500);
+  }
+};
+
 const getIntitialLikes = async (page) => {
   const intitialLikesText = await page
     .getByTestId("blogs")
@@ -22,4 +29,19 @@ const getIntitialLikes = async (page) => {
   return parseInt(intitialLikesText.replace("likes: ", ""));
 };
 
-export { loginWith, createBlog, getIntitialLikes };
+const likeBlog = async (page, index, times = 1) => {
+  await page
+    .getByTestId("blogs")
+    .locator(`.blog:nth-child(${index}) > button`)
+    .click();
+
+  for (let i = 0; i < times; i++) {
+    await page
+      .getByTestId("blogs")
+      .locator(`.blog:nth-child(${index}) button.like`)
+      .click();
+    await page.waitForTimeout(500);
+  }
+};
+
+export { loginWith, createBlog, getIntitialLikes, likeBlog, createBlogs };

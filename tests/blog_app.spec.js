@@ -1,4 +1,10 @@
-import { loginWith, createBlog, getIntitialLikes } from "./helper";
+import {
+  loginWith,
+  createBlog,
+  getIntitialLikes,
+  likeBlog,
+  createBlogs,
+} from "./helper";
 import {
   test,
   expect,
@@ -56,9 +62,8 @@ describe("Blog app", () => {
       await loginWith(page, "root", "password");
     });
 
-    afterEach(async ({ page, request }) => {
+    afterEach(async ({ request }) => {
       await request.post("http://localhost:3003/api/testing/reset");
-      await page.close();
     });
 
     test("a new blog can be created", async ({ page }) => {
@@ -105,36 +110,31 @@ describe("Blog app", () => {
         url: "test url 3",
       });
 
-      // Verify blog exists first
       await expect(page.getByTestId("blogs")).toContainText(
         "a blog can be deleted",
         { timeout: 10000 }
       );
 
-      // open details and wait for it to be visible
       const detailsButton = page
         .getByTestId("blogs")
         .locator(".blog:nth-child(1) button");
       await detailsButton.waitFor({ state: "visible" });
       await detailsButton.click();
 
-      // Wait for delete button to be visible
       const deleteButton = page.getByRole("button", { name: "delete" });
       await deleteButton.waitFor({ state: "visible" });
 
-      // Set up dialog handler
       page.on("dialog", (dialog) => dialog.accept());
 
-      // Click delete and wait for network response
       await deleteButton.click();
-      // Wait for blog to disappear with longer timeout
+
       await expect(page.getByTestId("blogs")).not.toContainText(
         "a blog can be deleted",
         { timeout: 10000 }
       );
     });
 
-    test.only("a blog can only be deleted by the creator", async ({ page }) => {
+    test("a blog can only be deleted by the creator", async ({ page }) => {
       await createBlog(page, {
         title: "a blog can only be deleted by the creator",
         author: "test author 4",
@@ -153,6 +153,43 @@ describe("Blog app", () => {
       await expect(
         page.getByRole("button", { name: "delete" })
       ).not.toBeVisible();
+    });
+
+    test("blogs are ordered by likes", async ({ page }) => {
+      await createBlogs(page, [
+        {
+          title: "test blog 5",
+          author: "test author 5",
+          url: "test url 5",
+        },
+        {
+          title: "test blog 6",
+          author: "test author 6",
+          url: "test url 6",
+        },
+        {
+          title: "test blog 7",
+          author: "test author 7",
+          url: "test url 7",
+        },
+      ]);
+
+      await expect(page.getByTestId("blogs")).toContainText("test blog 7", {
+        timeout: 10000,
+      });
+
+      await likeBlog(page, 3, 3);
+      await likeBlog(page, 2, 2);
+
+      await page
+        .getByRole("button", { name: "Sort by Likes (Descending)" })
+        .click();
+
+      await expect(
+        page.getByTestId("blogs").locator(".blog:nth-child(1)")
+      ).toContainText("test blog 7", {
+        timeout: 10000,
+      });
     });
   });
 });
