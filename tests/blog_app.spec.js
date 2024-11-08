@@ -17,6 +17,13 @@ describe("Blog app", () => {
         password: "password",
       },
     });
+    await request.post("http://localhost:3003/api/users", {
+      data: {
+        name: "user2",
+        username: "user2",
+        password: "password",
+      },
+    });
 
     await page.goto("/");
   });
@@ -45,15 +52,7 @@ describe("Blog app", () => {
   });
 
   describe("When logged in", () => {
-    beforeEach(async ({ page, request }) => {
-      await request.post("http://localhost:3003/api/testing/reset");
-      await request.post("http://localhost:3003/api/users", {
-        data: {
-          name: "root",
-          username: "root",
-          password: "password",
-        },
-      });
+    beforeEach(async ({ page }) => {
       await loginWith(page, "root", "password");
     });
 
@@ -133,6 +132,27 @@ describe("Blog app", () => {
         "a blog can be deleted",
         { timeout: 10000 }
       );
+    });
+
+    test.only("a blog can only be deleted by the creator", async ({ page }) => {
+      await createBlog(page, {
+        title: "a blog can only be deleted by the creator",
+        author: "test author 4",
+        url: "test url 4",
+      });
+      await page.locator(".message").waitFor({ state: "visible" });
+
+      await page.getByRole("button", { name: "logout" }).click();
+
+      await loginWith(page, "user2", "password");
+      const detailsButton = page
+        .getByTestId("blogs")
+        .locator(".blog:nth-child(1) button");
+      await detailsButton.waitFor({ state: "visible" });
+      await detailsButton.click();
+      await expect(
+        page.getByRole("button", { name: "delete" })
+      ).not.toBeVisible();
     });
   });
 });
